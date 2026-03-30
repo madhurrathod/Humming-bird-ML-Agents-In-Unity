@@ -62,5 +62,52 @@ public class FlowerArea : MonoBehaviour
         Flowers = new List<Flower>();
     }
 
-    
+    /// <summary>
+    /// Called when the game starts
+    /// </summary>
+    private void Start()
+    {
+        // Find all flowers that are children of this GameObject/Transform
+        FindChildFlowers(transform);
+    }
+
+    /// <summary>
+    /// Recursively finds all flowers and plants that are children of a parent transform
+    /// </summary>
+    /// <param name="parent"> The parent of the children to check </param>
+    private void FindChildFlowers(Transform parent)
+    {
+        for(int i=0; i< parent.childCount; i++)
+        {
+            Transform child = parent.GetChild(i);
+            if (child.CompareTag("flower_plant"))
+            {
+                // Found a flower plant, add it to the flowerPlants list
+                flowerPlants.Add(child.gameObject);
+
+                // Look for flowers within the flower plant
+                FindChildFlowers(child);
+            }
+            else
+            {
+                // Not a flower plant, look for a Flower component
+                Flower flower = child.GetComponent<Flower>();
+                if(flower != null)
+                {
+                    // Found a flower, add it to Flowers list
+                    Flowers.Add(flower);
+
+                    // Add the nectar collider to the lookup dictionary
+                    nectarFlowerDictionary.Add(flower.nectarCollider, flower);
+
+                    // Note: there are no flowers that are children of other flowers
+                }
+                else
+                {
+                    // Flower component not found, so check children
+                    FindChildFlowers(child);
+                }
+            }
+        }
+    }
 }
