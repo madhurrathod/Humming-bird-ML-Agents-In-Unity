@@ -1,16 +1,9 @@
 using UnityEngine;
-
-public class Hummingbird : MonoBehaviour
+using Unity.MLAgents;
+/// <summary>
+/// A humming bird Machine Learning Agent
+/// </summary>
+public class Hummingbird : Agent
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    
 }
