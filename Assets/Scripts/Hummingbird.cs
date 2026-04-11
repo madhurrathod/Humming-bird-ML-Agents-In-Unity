@@ -59,7 +59,7 @@ public class Hummingbird : Agent
     public override void Initialize()
     {   
         rigidbody = GetComponent<Rigidbody>();
-        flowerArea = GetComponent<FlowerArea>();
+        flowerArea = GetComponentInParent<FlowerArea>();
 
         // If not training mode, no max step, play forever
         if(!trainingMode) MaxStep = 0;
@@ -80,8 +80,8 @@ public class Hummingbird : Agent
         NectarObtained = 0f;
 
         // zero out velocities so that movement stops before a new episode begins
-        rigidbody.velocity = Vector3.zero;
-        rigidbody.angularvelocity = Vector3.zero;
+        rigidbody.linearVelocity = Vector3.zero;
+        rigidbody.angularVelocity = Vector3.zero;
 
         // Default to spawning in front of a flower
         bool inFrontOfFlower = true;
