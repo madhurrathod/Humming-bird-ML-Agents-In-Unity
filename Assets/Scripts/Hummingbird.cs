@@ -73,7 +73,7 @@ public class Hummingbird : Agent
         if (trainingMode)
         {
             // only reset flowers in training when there is one agent per area
-            flowerArea.ResetFlowers();
+            flowerArea.ResetFlower();
         }
 
         // Reset the nectar obtained
@@ -88,12 +88,99 @@ public class Hummingbird : Agent
         if (trainingMode)
         {
             // spawn in front of flower 50% of the time during training
-            inFrontOfFlower = UnityEnigne.Random.value > .5f;
+            inFrontOfFlower = UnityEngine.Random.value > .5f;
         }
         // move the agent to a new random position 
         MoveToSafeRandomPosition(inFrontOfFlower);
 
         // Recalculate the neareset flower now that the agent has moved
         UpdateNearestFlower();
+    }
+
+    private void MoveToSafeRandomPosition(bool inFrontOfFlower)
+    {
+        bool safePositionFound = false;
+        int attemptsRemaining = 100; // prevent an infinite loop
+        Vector3 potentialPosition = Vector3.zero;
+        Quaternion potentialRotation = new Quaternion();
+
+        // Loop until a safe position is found or we run out of attempts
+        while(!safePositionFound && attemptsRemaining > 0)
+        {
+            attemptsRemaining --;
+            if (inFrontOfFlower)
+            {
+                // Pick a random flower
+                Flower randomFlower = flowerArea.Flowers[UnityEngine.Random.Range(0,FlowerArea.Flowers.Count)];
+
+                // Position 10 to 20 cm in front of the flower
+                float distanceFromFlower = UnityEngine.Random.Range(.1f,.2f);
+
+                potentialPosition = randomFlower.transform.position + randomFlower.FlowerUpVector * distanceFromFlower;
+
+                // Point beak at flower (bird's head is center of transform)
+                Vector3 toFlower = randomFlower.FlowerCenterPosition - potentialPosition;
+
+                potentialRotation = Quaternion.LookRotation(toFlower, Vector3.up);
+            }
+            else
+            {
+                // Pick a random height from the ground
+                float height = UnityEngine.Random.Range(1.2f,2.5f);
+
+                // Pick a random radius from the center of the area
+                float radius = UnityEngine.Random.Range(2f,7f);
+
+                // Pick a random direction rotated around the y axis
+                Quaternion direction = Quaternion.Euler(0f, UnityEngine.Random.Range(-180,180),0f);
+
+                // combine height, radius and direction to pick a potential position
+                potentialPosition = flowerArea.transform.position + Vector3.up * height + direction * Vector3.forward * radius;
+
+                // choose and set random starting pitch and yaw
+                float pitch = UnityEngine.Random.Range(-60f,60f);
+                float yaw = UnityEngine.Random.Range(-180f,180f);
+                potentialRotation = Quaternion.Euler(pitch,yaw,0f);
+
+                // check to see if the agent will collide with anything
+                Collider[] colliders = Physics.OverlapSphere(potentialPosition, 0.05f);
+
+                // safe position has been found if no colliders are overlapped
+                safePositionFound = colliders.Length == 0;
+            }
+            Debug.Assert(safePositionFound, "could not find a safe position to spawn");
+
+            // set the position and rotation
+            transform.position = potentialPosition;
+            transform.rotation = potentialRotation;
+        }
+    }
+
+    /// <summary>
+    /// update the nearest flower to the agent
+    /// </summary>
+    private void UpdateNearestFlower()
+    {
+        foreach(Flower flower in flowerArea.Flowers)
+        {
+            if(nearestFlower == null && flower.HasNectar)
+            {
+                // No current nearest flower and this flower has nectar, so set to this flower
+                nearestFlower = flower;
+            }
+            else if (flower.HasNectar)
+            {
+                // calculate distance to this flower and distance to the current nearest flower
+                float distanceToFlower = Vector3.Distance(flower.transform.position, beakTip.position);
+                float distanceToCurrentNearestFlower = Vector3.Distance(nearestFlower.transform.position, beakTip.position);
+
+                // If current nearest flower is empty or this flower is closer, update the nearest flower
+                if(!nearestFlower.HasNectar || distanceToFlower < distanceToCurrentNearestFlower)
+                {
+                    nearestFlower = flower;
+                }
+            }
+
+        }
     }
 }
