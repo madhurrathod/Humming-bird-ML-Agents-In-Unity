@@ -1,5 +1,6 @@
 using UnityEngine;
 using Unity.MLAgents;
+using Unity.MLAgents.Actuators;
 /// <summary>
 /// A humming bird Machine Learning Agent
 /// </summary>
@@ -95,6 +96,54 @@ public class Hummingbird : Agent
 
         // Recalculate the neareset flower now that the agent has moved
         UpdateNearestFlower();
+    }
+
+    /// <summary>
+    /// Called when an action is received from either the player input or the neural network
+    /// 
+    /// vectorAction[i] represents:
+    /// Index 0: move vector x (+1 = right, -1 = left)
+    /// Index 1: move vector y (+1 = up, -1 = down)
+    /// Index 2: move vector z (+1 = forward, -1 = backward)
+    /// Index 3: pitch angle (+1 = pitch up, -1 = pitch down)
+    /// Index 4: yaw angle (+1 = turn right, -1 = turn left)
+    /// </summary>
+    /// <param name="actions">The action to take</param>
+    public override void OnActionReceived(ActionBuffers actions)
+    {
+        float[] vectorAction = actions.ContinuousActions.Array;
+        // Don't take actions if frozen
+        if(frozen) return;
+
+        // Calculate movement vector
+        Vector3 move = new Vector3(vectorAction[0], vectorAction[1],vectorAction[2]);
+
+        // Add force if the direction of move vector
+        rigidbody.AddForce(move * moveForce);
+
+        // Get the current rotation
+        Vector3 rotationVector = transform.rotation.eulerAngles;
+
+        // Calculate pitch and yaw rotation
+        float pitchChange = vectorAction[3];
+        float yawChange = vectorAction[4];
+
+        // Calculate smooth rotation changes
+        smoothPitchChange = Mathf.MoveTowards(smoothPitchChange, pitchChange, 2f * Time.fixedDeltaTime);
+        smoothYawChange = Mathf.MoveTowards(smoothYawChange, yawChange, 2f * Time.fixedDeltaTime);
+
+        // Calculate new pitch and yaw based on smoothed values
+        // Clamp pitch to avoid flipping upside down
+        float pitch = rotationVector.x + smoothPitchChange * Time.fixedDeltaTime * pitchSpeed;
+
+        if(pitch > 180f) pitch -= 360;
+        pitch = Mathf.Clamp(pitch, -MaxPitchAngle, MaxPitchAngle);
+
+        float yaw = rotationVector.y + smoothPitchChange * Time.fixedDeltaTime * yawSpeed;
+
+        // Apply the new rotation
+        transform.rotation = Quaternion.Euler(pitch, yaw, 0f);
+
     }
 
     private void MoveToSafeRandomPosition(bool inFrontOfFlower)
