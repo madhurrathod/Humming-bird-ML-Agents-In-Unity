@@ -2,6 +2,8 @@ using UnityEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Sensors;
+using System;
+using Unity.Mathematics;
 /// <summary>
 /// A humming bird Machine Learning Agent
 /// </summary>
@@ -183,6 +185,54 @@ public class Hummingbird : Agent
         // 10 total observations
     }
 
+    /// <summary>
+    /// When Behaviour type is set to "Heuristic Only" on the agent's Behaviour Parameters,
+    /// this function will be called, its return value will be fed into
+    /// <see cref="OnActionReceived(ActionBuffers)"/> instead of neural network
+    /// </summary>
+    /// <param name="actionsOut"> an output action array</param>
+    public override void Heuristic(in ActionBuffers actionsOut)
+    {
+        // Create placeholders for all movement/turning
+        Vector3 forward = Vector3.zero;
+        Vector3 left = Vector3.zero;
+        Vector3 up = Vector3.zero;
+        float pitch = 0f;
+        float yaw = 0f;
+
+        // Convert keyboard inputs to movement and turning
+        // All values should be between -1 and +1
+
+        // Forward/backward
+        if(Input.GetKey(KeyCode.W)) forward = transform.forward;
+        else if (Input.GetKey(KeyCode.S)) forward = -transform.forward;
+
+        // Left/right
+        if(Input.GetKey(KeyCode.A)) left = -transform.right;
+        else if(Input.GetKey(KeyCode.D)) left = transform.right;
+
+        // Up/Down
+        if(Input.GetKey(KeyCode.E)) up = transform.up;
+        else if(Input.GetKey(KeyCode.Q)) up = -transform.up;
+
+        // Pitch up/down
+        if(Input.GetKey(KeyCode.UpArrow)) pitch = 1f;
+        else if(Input.GetKey(KeyCode.DownArrow)) pitch = -1f;
+
+        // Turn left/right
+        if(Input.GetKey(KeyCode.LeftArrow)) yaw = -1f;
+        else if(Input.GetKey(KeyCode.RightArrow)) yaw = 1f;
+
+        // Combine the movement vectors and normalize
+        Vector3 combined = (forward + left + up).normalized;
+
+        // Add the 3 movement values, pitch, yaw to the actionsOut array
+        actionsOut.ContinuousActions.Array[0] = combined[0];
+        actionsOut.ContinuousActions.Array[1] = combined[1];
+        actionsOut.ContinuousActions.Array[2] = combined[2];
+        actionsOut.ContinuousActions.Array[3] = pitch;
+        actionsOut.ContinuousActions.Array[4] = yaw;
+    }
 
     /// <summary>
     /// Move the agent to a safe random position (i.e. does not collide with anything)
