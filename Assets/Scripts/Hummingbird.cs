@@ -1,6 +1,7 @@
 using UnityEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
+using Unity.MLAgents.Sensors;
 /// <summary>
 /// A humming bird Machine Learning Agent
 /// </summary>
@@ -10,10 +11,10 @@ public class Hummingbird : Agent
     public float moveForce = 2f;
 
     [Tooltip("Speed to pitch up or down")]
-    public float pitchSpeed = 10f;
+    public float pitchSpeed = 100f;
 
     [Tooltip("Speed to rotate around the up axis")]
-    public float yawSpeed = 10f;
+    public float yawSpeed = 100f;
 
     [Tooltip("Transform at the tip of the beak")]
     public Transform beakTip;
@@ -136,16 +137,58 @@ public class Hummingbird : Agent
         // Clamp pitch to avoid flipping upside down
         float pitch = rotationVector.x + smoothPitchChange * Time.fixedDeltaTime * pitchSpeed;
 
-        if(pitch > 180f) pitch -= 360;
+        if(pitch > 180f) pitch -= 360f;
         pitch = Mathf.Clamp(pitch, -MaxPitchAngle, MaxPitchAngle);
 
-        float yaw = rotationVector.y + smoothPitchChange * Time.fixedDeltaTime * yawSpeed;
+        float yaw = rotationVector.y + smoothYawChange * Time.fixedDeltaTime * yawSpeed;
 
         // Apply the new rotation
         transform.rotation = Quaternion.Euler(pitch, yaw, 0f);
 
     }
 
+    /// <summary>
+    /// Collect vector observations from the environment
+    /// </summary>
+    /// <param name="sensor"> The vector sensor </param>
+    public override void CollectObservations(VectorSensor sensor)
+    {   
+        // If nearestFlower is null, observe an empty array and return early
+        if(nearestFlower == null)
+        {
+            sensor.AddObservation(new float[10]);
+            return;
+        }
+
+        // Observe the agent's local rotation (4 observations)
+        sensor.AddObservation(transform.localRotation.normalized);
+
+        // get a vector from the beak tip to flower
+        Vector3 toFlower = nearestFlower.FlowerCenterPosition - beakTip.position;
+
+        // Observe a normalized vector pointing to nearest flower (3 observations)
+        sensor.AddObservation(toFlower.normalized);
+
+        // observe a dot product that indicates whether the beak tip is in front of flower (1 observation)
+        // (+1 means its directly in front of flower and -1 means it directly behind)
+        sensor.AddObservation(Vector3.Dot(toFlower.normalized, -nearestFlower.FlowerUpVector.normalized));
+        
+        // Observe a dot product that indicates whether the beak is pointing towards the flower (1 observation)
+        // (+1 means that the beak is directly pointing towards flower, -1 means directly away)
+        sensor.AddObservation(Vector3.Dot(beakTip.forward.normalized, -nearestFlower.FlowerUpVector.normalized));
+
+        // Observe the relative distance from beaktip to the flower (1 observation)
+        sensor.AddObservation(toFlower.magnitude / FlowerArea.AreaDiameter);
+
+        // 10 total observations
+    }
+
+
+    /// <summary>
+    /// Move the agent to a safe random position (i.e. does not collide with anything)
+    /// If in front of flower, also point the beak at the flower
+    /// </summary>
+    /// <param name="inFrontOfFlower">Whether to choose a sport in front of a flower</param>
     private void MoveToSafeRandomPosition(bool inFrontOfFlower)
     {
         bool safePositionFound = false;
