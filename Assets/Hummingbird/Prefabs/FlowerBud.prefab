@@ -373,7 +373,7 @@ GameObject:
   - component: {fileID: 2643483231814198236}
   m_Layer: 0
   m_Name: FlowerNectarCollider
-  m_TagString: Untagged
+  m_TagString: nectar
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -678,6 +678,7 @@ GameObject:
   - component: {fileID: 6681288286164871134}
   - component: {fileID: 2441992179914825192}
   - component: {fileID: 8277400165238776081}
+  - component: {fileID: 9037553948913882510}
   m_Layer: 0
   m_Name: Flower
   m_TagString: Untagged
@@ -764,3 +765,18 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &9037553948913882510
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7702261011759437261}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: faebd6d78d808436ab8280955ba3fb0d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Flower
+  fullFlowerColor: {r: 1, g: 0, b: 0.3, a: 1}
+  emptyFlowerColor: {r: 0.5, g: 0, b: 1, a: 1}
+  nectarCollider: {fileID: 0}
